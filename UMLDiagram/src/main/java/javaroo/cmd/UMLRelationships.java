@@ -5,11 +5,22 @@ public class UMLRelationships {
     final private UMLClass dest;
     final private UMLClass source;
     final private String id;
+    private RelationshipType type;
 
-    public UMLRelationships(final UMLClass source, final UMLClass dest) {
+    public enum RelationshipType {
+        AGGREGATION, COMPOSITION, INHERITANCE, REALIZATION
+    }
+
+    public UMLRelationships(final UMLClass source, final UMLClass dest, final RelationshipType type) {
+        //check each parameter is not null
+        if (source == null || dest == null || type == null) {
+            System.out.println("Sorry but we could not find a valid source, destination or type for this relationship");
+            return;
+        }
         this.source = source;
         this.dest = dest;
         this.id = source.getName() + dest.getName();
+        this.type = type;
     }
 
     public UMLClass getDest() {
@@ -22,31 +33,6 @@ public class UMLRelationships {
 
     public String getId() {
         return id;
-    }
-
-    public static void addRelationship(final UMLClass source, final UMLClass dest) {
-
-        if (source == null || dest == null) {
-            System.out.println("Sorry but we could not find a valid source or destination for this diagram");
-            return;
-        }
-
-        UMLDiagram.getRelationships().add(new UMLRelationships(source, dest));
-        UMLDiagram.setSaved(false);
-
-    }
-
-    
-    public static void deleteRelationship(final UMLDiagram diagram, final UMLRelationships rel) {
-        
-        if (rel == null) {
-            System.out.println("Sorry but we could not find a valid relationship for this diagram");
-            return;
-        }
-            
-        diagram.getRelationships().remove(rel);
-        UMLDiagram.setSaved(false);
-        
     }
 
 
