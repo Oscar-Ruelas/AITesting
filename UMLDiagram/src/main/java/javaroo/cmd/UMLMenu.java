@@ -1,5 +1,7 @@
 package javaroo.cmd;
 
+import javaroo.cmd.UMLDiagram;
+
 import java.util.*;
 
 public class UMLMenu {
@@ -94,9 +96,22 @@ public class UMLMenu {
                 case "1":
                     // here user can add a class, they can also add fields and methods to the class if they wish
                     System.out.print("\nEnter the class name to be added: ");
-                    String addClassName = scanner.nextLine();
-                    UMLClass.addClass(addClassName);
-                    System.out.println("\nClass added: " + addClassName);
+                    String addClassName = null;
+                    boolean classAdded = false;
+
+                    while (!classAdded) {
+                        addClassName = scanner.nextLine().trim();
+                        if (addClassName.isEmpty()) {
+                            System.out.println("The class name cannot be empty. Please try again.");
+                        } else {
+                            this.diagram.addClass(addClassName);
+                            classAdded = true; // Set flag to true to exit the loop
+                        }
+
+                        if (!classAdded) {
+                            System.out.print("\nEnter the class name to be added: ");
+                        }
+                    }
                     System.out.println("\nWould you also like to add fields and methods to the class? (y/n)");
                     String addFieldsMethods = scanner.nextLine();
                     if (addFieldsMethods.equals("y")) {
@@ -108,7 +123,9 @@ public class UMLMenu {
                             String fieldName = scanner.nextLine();
                             System.out.println("\nEnter the field type: ");
                             String fieldType = scanner.nextLine();
-                            UMLClass.addField(addClassName, fieldName, fieldType);
+                            System.out.println("\nEnter the field visibility: ");
+                            String visibility = scanner.nextLine();
+                            diagram.classExists(addClassName).addField(fieldName, fieldType, visibility);
                             System.out.println("\nField added.");
                         }
                         System.out.println("\nHow many methods would you like to add?");
@@ -119,21 +136,35 @@ public class UMLMenu {
                             String methodName = scanner.nextLine();
                             System.out.println("\nEnter the method type: ");
                             String methodType = scanner.nextLine();
-                            UMLClass.addMethod(addClassName, methodName, methodType);
+                            System.out.println("\nEnter the methods parameters (Type name, Type name, ...): ");
+                            String parameters = scanner.nextLine();
+                            // if empty string, then no parameters
+                            ArrayList<String> parametersList;
+                            if (!parameters.equals("")) {
+                                parametersList = new ArrayList<String>(Arrays.asList(parameters.split(", ")));
+                            }
+                            else {
+                                parametersList = new ArrayList<String>();
+                            }
+                            // parse parameters into an string array list on the commas
+                            diagram.classExists(addClassName).addMethod(methodName, methodType, parametersList);
                             System.out.println("\nMethod added.");
                         }
                     }
                     // list added class with its fields and methods
                     diagram.listClasses();
                     returnToMainMenu();
+                    break;
 
                 case "2":
                     diagram.listClasses();
                     System.out.print("\nEnter the class name to be removed: ");
                     String removeClassName = scanner.nextLine();
+                    diagram.removeClass(removeClassName);
                     // print updated list of classes
                     diagram.listClasses();
                     returnToMainMenu();
+                    break;
 
                 case "3":
                     diagram.listClasses();
@@ -141,10 +172,11 @@ public class UMLMenu {
                     String oldClassName = scanner.nextLine();
                     System.out.print("\nEnter the new class name: ");
                     String newClassName = scanner.nextLine();
-                    System.out.println("\nClass renamed from: " + oldClassName + " to " + newClassName);
+                    diagram.renameClass(oldClassName, newClassName);
                     // print updated list of classes
                     diagram.listClasses();
                     returnToMainMenu();
+                    break;
 
                 case "4":
                     // menu option for add field/method, remove field/method, rename field/method
@@ -174,9 +206,12 @@ public class UMLMenu {
                             String addFieldName = scanner.nextLine();
                             System.out.print("\nEnter the field type: ");
                             String addFieldType = scanner.nextLine();
-                            UMLClass.addField(addClassName, addFieldName, addFieldType);
+                            System.out.print("\nEnter the field visibility: ");
+                            String visibility = scanner.nextLine();
+                            diagram.classExists(addFieldClassName).addField(addFieldName, addFieldType, visibility);
                             System.out.println("\nField added.");
                             returnToMainMenu();
+                            break;
                            
                         case "2":
                             // remove field logic
@@ -184,8 +219,9 @@ public class UMLMenu {
                             String removeFieldClassName = scanner.nextLine();
                             System.out.print("\nEnter the field name: ");
                             String removeFieldName = scanner.nextLine();
-                            System.out.println("\nField removed.");
+                            diagram.classExists(removeFieldClassName).removeField(removeFieldName);
                             returnToMainMenu();
+                            break;
                         
                         case "3":
                             // rename field logic
@@ -195,8 +231,9 @@ public class UMLMenu {
                             String oldFieldName = scanner.nextLine();
                             System.out.print("\nEnter the new field name: ");
                             String newFieldName = scanner.nextLine();
-                            System.out.println("\nField renamed from: " + oldFieldName + " to " + newFieldName);
+                            diagram.classExists(renameFieldClassName).renameField(oldFieldName, newFieldName);
                             returnToMainMenu();
+                            break;
                         
                         case "4":
                             // add method logic
@@ -206,18 +243,41 @@ public class UMLMenu {
                             String addMethodName = scanner.nextLine();
                             System.out.print("\nEnter the method type: ");
                             String addMethodType = scanner.nextLine();
-                            UMLClass.addMethod(addClassName, addMethodName, addMethodType);
-                            System.out.println("\nMethod added.");
+                            System.out.println("\nEnter the methods parameters (Type name, Type name, ...): ");
+                            String parameters = scanner.nextLine();
+                            // if empty string, then no parameters
+                            ArrayList<String> parametersList;
+                            if (!parameters.isEmpty()) {
+                                // parse parameters into an string array list on the commas
+                                parametersList = new ArrayList<String>(Arrays.asList(parameters.split(", ")));
+                            }
+                            else {
+                                parametersList = new ArrayList<String>();
+                            }
+                            diagram.classExists(addMethodClassName).addMethod(addMethodName, addMethodType, parametersList);
                             returnToMainMenu();
+                            break;
                         
                         case "5":
                             // remove method logic
                             System.out.print("\nEnter the class name: ");
                             String removeMethodClassName = scanner.nextLine();
-                            System.out.print("\nEnter the method name: ");
-                            String removeMethodName = scanner.nextLine();
-                            System.out.println("\nMethod removed.");
+                            diagram.classExists(removeMethodClassName).listMethods();
+                            System.out.print("\nEnter the number of the method you want to remove: ");
+                            String removeMethodNumber = scanner.nextLine();
+                            int num = Integer.parseInt(removeMethodNumber);
+                            // check for valid input
+                            while (num < 0 || num > diagram.classExists(removeMethodClassName).getMethods().size()) {
+                                System.out.println("\nInvalid input. Please try again.");
+                                System.out.print("\nEnter the number of the method you want to remove: ");
+                                removeMethodNumber = String.valueOf(scanner.nextInt());
+                            }
+
+                            diagram.classExists(removeMethodClassName).removeMethod(Integer.parseInt(removeMethodNumber));
+                            // print updated list of methods
+                            diagram.classExists(removeMethodClassName).listMethods();
                             returnToMainMenu();
+                            break;
                             
                         case "6":
                             // rename method logic
@@ -227,8 +287,9 @@ public class UMLMenu {
                             String oldMethodName = scanner.nextLine();
                             System.out.print("\nEnter the new method name: ");
                             String newMethodName = scanner.nextLine();
-                            System.out.println("\nMethod renamed from: " + oldMethodName + " to " + newMethodName);
+                            diagram.classExists(renameMethodClassName).renameMethod(Integer.parseInt(oldMethodName), newMethodName);
                             returnToMainMenu();
+                            break;
                         
                         case "7":
                             // help with field and method options
@@ -240,11 +301,10 @@ public class UMLMenu {
                             System.out.println("[5: Remove Method] To remove a method, select option '5' and provide the class name and method name.");
                             System.out.println("[6: Rename Method] To rename a method, select option '6' and provide the class name, old method name, and new method name.");
                             returnToMainMenu();
+                            break;
 
                     }
                     break;
-                    
-            }
 
                 case "5":
                     System.out.println("\nHelp with class operations:");
@@ -256,10 +316,11 @@ public class UMLMenu {
 
                 default:
                     System.out.println("\nInvalid choice. Please try again.");
+                    
+            }
+
             }
         }
-
-    }
 
     private void displayRelationshipMenu(Scanner scanner) {
         boolean back = false;
@@ -268,8 +329,7 @@ public class UMLMenu {
             System.out.println("\n_______Relationship Operations:_______");
             System.out.println("1: Add Relationship");
             System.out.println("2: Remove Relationship");
-            System.out.println("3: Rename Relationships");
-            System.out.println("4: Help");
+            System.out.println("3: Help");
             
             System.out.print("Enter your choice: ");
             String choice = scanner.nextLine();
@@ -280,43 +340,52 @@ public class UMLMenu {
     
             switch (choice) {
                 case "1":
-                    // Add relationship logic
                     System.out.print("\nEnter the source class name: ");
                     String sourceClassName = scanner.nextLine();
                     System.out.print("\nEnter the destination class name: ");
                     String destinationClassName = scanner.nextLine();
-                    System.out.print("\nEnter the relationship type: ");
+                    System.out.print("\nChoose relationship type: \n");
+                    System.out.println("1: Aggregation");
+                    System.out.println("2: Composition");
+                    System.out.println("3: Inheritance");
+                    System.out.println("4: Realization");
+
                     String relationshipType = scanner.nextLine();
-                    UMLRelationship.addRelationship(sourceClassName, destinationClassName, relationshipType);
-                    System.out.println("\nRelationship added.");
+                    int num = Integer.parseInt(relationshipType);
+                    while (num < 1 || num > 4) {
+                        System.out.println("\nInvalid input. Please try again.");
+                        System.out.print("\nChoose relationship type: ");
+                        System.out.println("1: Aggregation");
+                        System.out.println("2: Composition");
+                        System.out.println("3: Inheritance");
+                        System.out.println("4: Realization");
+                        relationshipType = scanner.nextLine();
+                        num = Integer.parseInt(relationshipType);
+                    }
+                    UMLRelationships.RelationshipType type = UMLRelationships.RelationshipType.values()[num - 1];
+
+                    diagram.addRelationship(diagram.classExists(sourceClassName), diagram.classExists(destinationClassName), type);
+
                     returnToMainMenu();
+                    break;
                     
                 case "2":
                     // Remove relationship logic
-                    System.out.print("\nEnter the source class name: ");
-                    String sourceClassName2 = scanner.nextLine();
-                    System.out.print("\nEnter the destination class name: ");
-                    String destinationClassName2 = scanner.nextLine();
-                    UMLRelationship.removeRelationship(sourceClassName2, destinationClassName2);
-                    System.out.println("\nRelationship removed.");
+                    diagram.listRelationships();
+                    System.out.print("\nEnter the number of the relationship you want to remove: ");
+                    String removeRelationshipNumber = scanner.nextLine();
+                    Integer num2 = Integer.parseInt(removeRelationshipNumber);
+                    // check for valid input
+                    diagram.removeRelationship(Integer.parseInt(removeRelationshipNumber));
+                    // print updated list of relationships
+                    diagram.listRelationships();
                     returnToMainMenu();
-                    
-    
+                    break;
+                
                 case "3":
-                    // Rename relationship logic
-                    System.out.print("\nEnter the old relationship name: ");
-                    String oldRelationshipName = scanner.nextLine();
-                    System.out.print("\nEnter the new relationship name: ");
-                    String newRelationshipName = scanner.nextLine();
-                    UMLRelationship.renameRelationship(oldRelationshipName, newRelationshipName);
-                    System.out.println("\nRelationship renamed from: " + oldRelationshipName + " to " + newRelationshipName);
-                    returnToMainMenu();
-    
-                case "4":
                     System.out.println("\nHelp with relationship operations:");
                     System.out.println("[1: Add Relationship] To add a relationship, select option '1' and provide source class, destination class, and relationship type.");
                     System.out.println("[2: Delete Relationship] To delete a relationship, select option '2' and provide source class and destination class.");
-                    System.out.println("[3: Rename Relationships] To rename a relationship, select option '3' and provide the old and new relationship names.");
                     break;
                 
                 default:
@@ -348,13 +417,15 @@ public class UMLMenu {
                 case "1":
                     System.out.print("\nEnter the file name: ");
                     String fileName = scanner.nextLine();
-                    UMLSaveLoad.saveData(fileName);
+                    UMLSaveLoad saveLoad = new UMLSaveLoad(diagram);
+                    saveLoad.saveData(fileName);
                     returnToMainMenu();
                     break;
                 case "2":
                     System.out.print("\nEnter the file name: ");
-                    String file_Name = scanner.nextLine();
-                    UMLSaveLoad.loadData(file_Name);
+                    String fileNamed = scanner.nextLine();
+                    UMLSaveLoad load = new UMLSaveLoad(diagram);
+                    load.loadData(fileNamed);
                     returnToMainMenu();
                     break;
                 case "3":

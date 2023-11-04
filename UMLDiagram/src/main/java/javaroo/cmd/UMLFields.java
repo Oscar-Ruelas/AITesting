@@ -24,6 +24,10 @@ public class UMLFields {
         return visibility;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String toString() {
         
         if (this.visibility.equals("public")) {
